@@ -1,7 +1,20 @@
 <template>
   <div class="image-viewer">
-    <div class="image-style-select">
-      <label for="art-style-combobox">Art Style: </label>
+  <a
+    href="https://github.com/alekcangp/sova"
+    class="github-link"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="View on GitHub"
+  >
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.09.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.987 1.029-2.687-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.908-1.296 2.747-1.025 2.747-1.025.546 1.378.202 2.397.1 2.65.64.7 1.028 1.594 1.028 2.687 0 3.847-2.338 4.695-4.566 4.944.36.31.68.92.68 1.855 0 1.338-.012 2.419-.012 2.749 0 .268.18.577.688.48C19.138 20.2 22 16.447 22 12.021 22 6.484 17.523 2 12 2z"/>
+    </svg>
+  </a>
+    <div class="image-style-select" style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; flex: 1 1 auto; min-width: 0;">
+
+      <label for="art-style-combobox">Art Style:&nbsp; </label>
       <div class="combobox-wrapper">
         <input
           id="art-style-combobox"
@@ -37,6 +50,8 @@
             Custom...
           </li>
         </ul>
+      </div>
+
       </div>
     </div>
     <div class="image-container">
@@ -582,4 +597,28 @@ onMounted(() => {
   background: #e6eeff;
   color: #0056CC;
 }
+.github-link {
+  position: absolute;
+  bottom: 18px;
+  right: 24px;
+  z-index: 10;
+  opacity: 0.82;
+  transition: opacity 0.18s, transform 0.18s;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+.github-link:hover {
+  opacity: 1;
+  background:  rgba(255,255,255,0.5);
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.image-viewer {
+  position: relative;
+}
+
 </style>
