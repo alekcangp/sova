@@ -562,6 +562,7 @@ onMounted(() => {
   position: relative;
   display: inline-block;
   min-width: 240px;
+  margin-top: 8px
 }
 
 .combobox-input {
