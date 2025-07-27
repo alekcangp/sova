@@ -1,6 +1,19 @@
 <template>
   <div class="image-viewer">
   <a
+    href="https://deepwiki.com/alekcangp/sova"
+    class="docs-link"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="View Documentation"
+    style="margin-right: 12px;"
+  >
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="3" width="16" height="18" rx="2"/>
+      <path d="M8 6h8M8 10h8M8 14h6"/>
+    </svg>
+  </a>
+  <a
     href="https://github.com/alekcangp/sova"
     class="github-link"
     target="_blank"
@@ -597,10 +610,9 @@ onMounted(() => {
   background: #e6eeff;
   color: #0056CC;
 }
-.github-link {
+.docs-link, .github-link {
   position: absolute;
   bottom: 18px;
-  right: 24px;
   z-index: 10;
   opacity: 0.82;
   transition: opacity 0.18s, transform 0.18s;
@@ -611,10 +623,18 @@ onMounted(() => {
   display: flex;
   align-items: center;
 }
-.github-link:hover {
+.docs-link {
+  right: 62px;
+}
+.github-link {
+  right: 24px;
+}
+
+ 
+.docs-link:hover, .github-link:hover {
   opacity: 1;
   background:  rgba(255,255,255,0.5);
-  transform: scale(1.05) translateY(-2px);
+  transform: scale(1.02) translateY(-1px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 .image-viewer {
