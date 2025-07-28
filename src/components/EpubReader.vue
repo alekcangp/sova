@@ -244,7 +244,7 @@ const handleFileUpload = async (file: File) => {
           isLoadingBook.value = false;
     bookLoaded.value = true;
         }
-      }, 10000); // 10 second maximum loading time
+      }, 25000); // 25 second maximum loading time
 
       // Wait for book to be ready
       await new Promise<void>((resolve) => {

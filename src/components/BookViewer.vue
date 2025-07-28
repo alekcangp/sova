@@ -98,9 +98,11 @@ watch(
         
         // Generate locations
         try {
-          await epubBook.locations.generate(1024); // 1024 chars per page
-          totalPages.value = epubBook.locations.length();
+          const loci = await epubBook.locations.generate(); // default chars per page
+          totalPages.value = loci.length;
+          console.log(loci);
         } catch (error) {
+          console.log('location#generate error');
           // Continue even if locations fail - not critical
         }
         
@@ -244,43 +246,23 @@ function goToCfi(cfi: string) {
 }
 
 async function getCurrentPageText() {
-  if (!rendition || !epubBook || !epubBook.locations) return '';
-  const loc = rendition.currentLocation?.();
-  
-  if (!loc || !loc.start || !loc.start.cfi) return '';
-  let startCfi = loc.start.cfi;
+ const contents = rendition.getContents()[0];
+ const loc = rendition.currentLocation?.();
+let text = '';
+if (contents) {
+  const doc = contents.document;
+  const fullText = doc.body.textContent.trim();
+  const normText = fullText.replace(/\s+/g, ' ').trim();
+const page = loc.start.displayed.page;
+const total = loc.start.displayed.total;
+const pos = Math.round(normText.length*page/((total-1) ? total-1 : 1));
+text = normText.substring(pos-1024, pos);
+  console.log("📖 Text from iframe:", text);
 
-  // Try to get the current page index in the locations array
-  let pageIndex = null;
-  //if (loc.start.index !== undefined) {
-   // pageIndex = loc.start.index;
-  //  
- // } else {
-    // Fallback: use pageFromCfi (1-based)
-    pageIndex = epubBook.locations.locationFromCfi(startCfi);
-  //}
-
-  // Use cfiFromLocation for more accurate CFI calculation
-  if (pageIndex !== null && pageIndex >= 0) {
-    startCfi = epubBook.locations.cfiFromLocation(pageIndex);
-  }
-
-  if (!startCfi) return '';
-
-  try {
-    let range = epubBook.getRange(startCfi);
-    if (range instanceof Promise) {
-      range = await range;
-    }
-    const text = range?.toString() || '';
-    //console.log(pageIndex + ' ' + text)
-    return text.replace(/\s+/g, ' ').trim();
-  } catch (e) {
-    // fallback: get all visible text as before
-    const contents = rendition.getContents();
-    if (!contents || !contents.length) return '';
-    return contents[0].document.body.innerText || '';
-  }
+} else {
+  console.warn("📭 Iframe contents not found yet.");
+}
+ return text;
 }
 
 function injectedNavKeydown(event: KeyboardEvent) {
