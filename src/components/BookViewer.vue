@@ -100,7 +100,6 @@ watch(
         try {
           const loci = await epubBook.locations.generate(); // default chars per page
           totalPages.value = loci.length;
-          console.log(loci);
         } catch (error) {
           console.log('location#generate error');
           // Continue even if locations fail - not critical
@@ -255,8 +254,9 @@ if (contents) {
   const normText = fullText.replace(/\s+/g, ' ').trim();
 const page = loc.start.displayed.page;
 const total = loc.start.displayed.total;
+const len = Math.round(normText.length/total);
 const pos = Math.round(normText.length*page/((total-1) ? total-1 : 1));
-text = normText.substring(pos-1024, pos);
+text = normText.substring(pos-len,pos);
   console.log("📖 Text from iframe:", text);
 
 } else {
