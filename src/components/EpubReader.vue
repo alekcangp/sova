@@ -23,8 +23,8 @@
           </template>
           <template v-else>
             <div class="book-viewer-scrollable">
-              <div v-if="showBookCover && bookMetadata?.coverUrl" class="book-cover-modal">
-                <img :src="bookMetadata.coverUrl" alt="Book cover" class="book-cover-image" />
+              <div v-if="showBookCover && bookMetadata?.cover" class="book-cover-modal">
+                <img :src="bookMetadata.cover" alt="Book cover" class="book-cover-image" />
                 <div class="book-cover-actions">
                   <button class="primary-btn" @click="continueReading">Continue Reading</button>
                 </div>
@@ -188,11 +188,11 @@ const aiService = new CloudflareAIService();
 // AbortController for AI image generation
 let imageGenAbortController: AbortController | null = null;
 
-const bookmarks = ref<{ cfi: string; label: string; timestamp: number; snippet?: string }[]>([]);
+type Bookmark = { positionId: string; label: string; timestamp: number; snippet?: string };
+const bookmarks = ref<Bookmark[]>([]);
 const showBookmarks = ref(false);
 
 const getBookmarksKey = () => `epub-bookmarks-${bookMetadata.value?.title || 'default'}`;
-// Removed old getLastCfiKey logic; unified positionId system is used.
 const getFontSizeKey = () => `epub-font-size-${bookMetadata.value?.title || 'default'}`;
 
 const selectedArtStyle = ref(localStorage.getItem('epub-art-style') || 'Futuristic');
@@ -234,7 +234,7 @@ const handleFileUpload = async (file: File) => {
       const metadata = await epubService.loadEpub(file);
       bookMetadata.value = metadata;
       // Show book cover if available
-      if (metadata.coverUrl) {
+      if (metadata.cover) {
         // Only set up restore after cover is shown
         const savedPositionId = bookViewerRef.value?.loadPositionId?.();
         if (savedPositionId) {
