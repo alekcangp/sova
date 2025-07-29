@@ -33,6 +33,9 @@ import ePub from 'epubjs';
 const props = defineProps<{ currentCfi: string | null; metadata: BookMetadata | null; isLoadingBook?: boolean; fontSize?: number; totalPages?: number }>();
 
 const emit = defineEmits<{
+  (e: 'positionIdChange', positionId: string): void;
+  (e: 'restoreComplete', positionId: string): void; // Optional, for restore completion
+
   (e: 'pageChange', payload: { page: number; total: number; cfi: string }): void;
   (e: 'textSelected', text: string): void;
   (e: 'bookReady'): void;
@@ -51,6 +54,65 @@ const FONT_SIZE_KEY = 'epub-font-size';
 const fontSize = ref<number>(parseInt(localStorage.getItem(FONT_SIZE_KEY) || '100', 10)); // percent
 
 let pendingCfiCheck: { requested: string | null, triedFallback: boolean } | null = null;
+
+// --- PositionId logic ---
+function getPositionIdFromLocation(location: any): string | null {
+  if (!location || !location.start || !location.start.cfi || !location.start.displayed?.page) return null;
+  return `${location.start.cfi}::${location.start.displayed.page}`;
+}
+
+function savePositionId(positionId: string) {
+  if (!props.metadata?.title) return;
+  localStorage.setItem(`epub-positionid-${props.metadata.title}`, positionId);
+}
+
+function loadPositionId(): string | null {
+  if (!props.metadata?.title) return null;
+  return localStorage.getItem(`epub-positionid-${props.metadata.title}`);
+}
+
+let isRestoringPosition = false;
+
+async function restorePositionById(positionId: string) {
+  // Format: cfi::page
+  if (!rendition || !epubBook || !epubBook.locations) return;
+  const [cfi, pageStr] = positionId.split('::');
+  const targetPage = parseInt(pageStr, 10);
+  if (!cfi || !targetPage) return;
+  isRestoringPosition = true;
+ // console.log('Restoring position:', cfi, 'targetPage:', targetPage);
+  await rendition.display(cfi);
+  await new Promise(resolve => setTimeout(resolve,100));
+  let loc = rendition.currentLocation?.();
+ // console.log('After display, actual cfi:', loc?.start.cfi, ' ', loc?.start.displayed.page, ' ', loc?.start.displayed.total);
+  let tries = 0;
+  let direction = loc.start.displayed.page <= targetPage ? true : false;
+  while (loc && loc.start && loc.start.displayed && (loc.start.displayed.page !== targetPage || loc.start.cfi !== cfi) && loc.start.cfi.split('!')[0] == cfi.split('!')[0] && tries < 50 ){
+    if (direction){
+      await rendition.next();
+    } else {
+      await rendition.prev();
+    }
+    loc = rendition.currentLocation?.();
+    tries++;
+  }
+  
+
+  isRestoringPosition = false;
+  const newPosId = getPositionIdFromLocation(loc);
+  if (newPosId) {
+    savePositionId(newPosId); // persist restored positionId to localStorage
+    emit('restoreComplete', newPosId);
+  }
+}
+
+function getCurrentPositionId(): string | null {
+  if (!rendition) return null;
+  const loc = rendition.currentLocation?.();
+  return getPositionIdFromLocation(loc);
+}
+// --- End PositionId logic ---
+
 
 // Watch for CFI prop changes
 watch(
@@ -126,15 +188,27 @@ watch(
           rendition.themes.fontSize('100%');
         }
         emit('bookReady');
-        
+        // Restore positionId from localStorage if exists (after book is ready)
+        const savedPositionId = loadPositionId();
+        if (savedPositionId) {
+          restorePositionById(savedPositionId);
+        }
         // Set up event listeners
         rendition.on('relocated', async (location: any) => {
+          if (isRestoringPosition) return; // Don't run fallback logic during restore
+          // Update and persist positionId on every relocation
+          const positionId = getPositionIdFromLocation(location);
+          if (positionId) {
+            savePositionId(positionId);
+            emit('positionIdChange', positionId);
+          }
+
           if (epubBook && epubBook.locations) {
             const total = epubBook.locations.length();
             const current = epubBook.locations.locationFromCfi(location.start.cfi) + 1;
             emit('pageChange', { page: current, total, cfi: location.start.cfi });
             // Robust fallback for end-of-book/chapter
-            if (pendingCfiCheck && pendingCfiCheck.requested) {
+            if (!isRestoringPosition && pendingCfiCheck && pendingCfiCheck.requested) {
               const actual = location.start.cfi;
               const requested = pendingCfiCheck.requested;
               if (actual !== requested && !pendingCfiCheck.triedFallback) {
@@ -145,7 +219,7 @@ watch(
                   pendingCfiCheck.triedFallback = true;
                   await rendition.display(lastCfi);
                 } else {
-                  console.log('[BookViewer] CFI mismatch but not at end:', { requested, actual });
+                 // console.log('[BookViewer] CFI mismatch but not at end:', { requested, actual });
                   pendingCfiCheck = null;
                 }
               } else {
@@ -167,6 +241,13 @@ watch(
 watch(
   () => props.fontSize,
   async (newFontSize) => {
+    // On font size change, update positionId after reflow
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const posId = getCurrentPositionId();
+    if (posId) {
+      savePositionId(posId);
+      emit('positionIdChange', posId);
+    }
     if (rendition) {
       // Always apply the font size, even if the value is the same
       rendition.themes.fontSize((newFontSize || 100) + '%');
@@ -184,6 +265,24 @@ watch(
 );
 
 onMounted(() => {
+  // Listen to window resize to update positionId
+  window.addEventListener('resize', () => {
+    setTimeout(() => {
+      // Force epubjs rendition to reflow and re-render current location
+      if (rendition) {
+        rendition.resize();
+        const loc = rendition.currentLocation?.();
+        if (loc && loc.start && loc.start.cfi) {
+          rendition.display(loc.start.cfi);
+        }
+      }
+      const posId = getCurrentPositionId();
+      if (posId) {
+        savePositionId(posId);
+        emit('positionIdChange', posId);
+      }
+    }, 300);
+  });
   const lastPart = props.currentCfi ? props.currentCfi.split(':').pop() ?? '' : '';
   pageInputValue.value = lastPart ? parseInt(lastPart, 10) : 1;
   // Restore font size from localStorage
@@ -257,7 +356,7 @@ const total = loc.start.displayed.total;
 const len = Math.round(normText.length/total);
 const pos = Math.round(normText.length*page/((total-1) ? total-1 : 1));
 text = normText.substring(pos-len,pos);
-  console.log("📖 Text from iframe:", text);
+ //onsole.log("📖 Text from iframe:", text);
 
 } else {
   console.warn("📭 Iframe contents not found yet.");
@@ -297,7 +396,18 @@ async function findCfiForSnippet(snippet: string): Promise<string | null> {
   return null;
 }
 
-defineExpose({ nextPage, previousPage, getCurrentCfi, goToCfi, getCurrentPageText, findCfiForSnippet });
+defineExpose({
+  nextPage,
+  previousPage,
+  getCurrentCfi,
+  goToCfi,
+  getCurrentPageText,
+  findCfiForSnippet,
+  getCurrentPositionId,
+  restorePositionById,
+  savePositionId,
+  loadPositionId
+});
 </script>
 
 <style scoped>

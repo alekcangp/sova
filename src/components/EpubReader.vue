@@ -23,17 +23,25 @@
           </template>
           <template v-else>
             <div class="book-viewer-scrollable">
-          <BookViewer
+              <div v-if="showBookCover && bookMetadata?.coverUrl" class="book-cover-modal">
+                <img :src="bookMetadata.coverUrl" alt="Book cover" class="book-cover-image" />
+                <div class="book-cover-actions">
+                  <button class="primary-btn" @click="continueReading">Continue Reading</button>
+                </div>
+              </div>
+              <BookViewer
+                v-else
                 ref="bookViewerRef"
                 :key="bookViewerKey"
                 :currentCfi="currentCfi"
                 :totalPages="totalPages"
-            :metadata="bookMetadata"
+                :metadata="bookMetadata"
                 :isLoadingBook="isLoadingBook"
                 :fontSize="fontSize"
-            @pageChange="handlePageChange"
-            @textSelected="handleTextSelection"
+                @pageChange="handlePageChange"
+                @textSelected="handleTextSelection"
                 @bookReady="onBookReady"
+                @restoreComplete="onRestoreComplete"
               />
             </div>
             <div v-if="!isLoadingBook" class="viewer-controls">
@@ -129,20 +137,20 @@
             </button>
           </div>
           <div class="bookmark-list">
-            <div v-for="bookmark in bookmarks" :key="bookmark.cfi + bookmark.timestamp" class="bookmark-item" @click="goToBookmark(bookmark.cfi)">
+            <div v-for="bookmark in bookmarks" :key="bookmark.positionId + bookmark.timestamp" class="bookmark-item" @click="goToBookmark(bookmark.positionId)">
               <div class="bookmark-info">
                 <span class="bookmark-title">{{ bookmark.label }}</span>
                 <span class="bookmark-date">{{ new Date(bookmark.timestamp).toLocaleString() }}</span>
               </div>
-              <button @click.stop="removeBookmark(bookmark.cfi)" class="remove-bookmark">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+              <button @click.stop="removeBookmark(bookmark.positionId)" class="remove-bookmark">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
       </div>
     </transition>
   </div>
@@ -172,6 +180,8 @@ const showUpload = ref(true); // controls upload UI (for drag-and-drop, optional
 const fileInput = ref<HTMLInputElement | null>(null);
 const bookViewerKey = ref(0);
 const bookViewerRef = ref();
+const showBookCover = ref(false);
+let pendingRestorePositionId: string | null = null;
 
 const aiService = new CloudflareAIService();
 
@@ -182,7 +192,7 @@ const bookmarks = ref<{ cfi: string; label: string; timestamp: number; snippet?:
 const showBookmarks = ref(false);
 
 const getBookmarksKey = () => `epub-bookmarks-${bookMetadata.value?.title || 'default'}`;
-const getLastCfiKey = () => `epub-last-cfi-${bookMetadata.value?.title || 'default'}`;
+// Removed old getLastCfiKey logic; unified positionId system is used.
 const getFontSizeKey = () => `epub-font-size-${bookMetadata.value?.title || 'default'}`;
 
 const selectedArtStyle = ref(localStorage.getItem('epub-art-style') || 'Futuristic');
@@ -191,6 +201,7 @@ let pendingRestoreCfi: string | null = null;
 let cfiRestorationTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const handleFileUpload = async (file: File) => {
+  showBookCover.value = false;
   try {
     // Reset state
     bookMetadata.value = null;
@@ -222,6 +233,15 @@ const handleFileUpload = async (file: File) => {
     try {
       const metadata = await epubService.loadEpub(file);
       bookMetadata.value = metadata;
+      // Show book cover if available
+      if (metadata.coverUrl) {
+        // Only set up restore after cover is shown
+        const savedPositionId = bookViewerRef.value?.loadPositionId?.();
+        if (savedPositionId) {
+          pendingRestorePositionId = savedPositionId;
+        }
+        showBookCover.value = true;
+      }
       
       // Store just the book name for reference
       localStorage.setItem('lastOpenedBookName', file.name);
@@ -231,7 +251,7 @@ const handleFileUpload = async (file: File) => {
       if (savedFontSize) {
         fontSize.value = parseInt(savedFontSize, 10);
       } else {
-        fontSize.value = 100; // Default font size for new books
+        fontSize.value = 150; // Default font size for new books
       }
       
       // Force BookViewer to reinitialize (after CFI is set)
@@ -291,6 +311,17 @@ function onFileInputChange(event: Event) {
   }
   if (fileInput.value) fileInput.value.value = '';
   }
+
+function continueReading() {
+  showBookCover.value = false;
+  // Restore last positionId after BookViewer is visible
+  if (pendingRestorePositionId) {
+    setTimeout(() => {
+      bookViewerRef.value?.restorePositionById?.(pendingRestorePositionId);
+      pendingRestorePositionId = null;
+    }, 100); // Wait for BookViewer to mount
+  }
+}
 
 const handleTextSelection = async (text: string) => {
   // If a generation is in progress, show 'Illustration canceled' for 1 second before starting new generation
@@ -366,6 +397,8 @@ const downloadImage = (imageUrl: string) => {
 let imageGenDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function handlePageChange({ page, cfi }: { page: number; cfi: string }) {
+  // Update currentPositionId after page change
+  currentPositionId.value = bookViewerRef.value?.getCurrentPositionId?.() ?? null;
   if (pendingRestoreCfi) {
     if (cfi === pendingRestoreCfi) {
       // Arrived at the restored CFI, now allow saving
@@ -383,7 +416,6 @@ async function handlePageChange({ page, cfi }: { page: number; cfi: string }) {
   
   if (cfi) {
     currentCfi.value = cfi;
-    localStorage.setItem(getLastCfiKey(), cfi);
     currentPageNumber.value = page;
     // Debounce image generation here
     if (imageGenDebounceTimer) clearTimeout(imageGenDebounceTimer);
@@ -517,19 +549,26 @@ function decreaseFontSize() {
   }
 }
 
-// Also persist font size when changed directly (e.g., via slider or other UI)
+// Update bookmark if on a bookmarked position when font size changes
 watch(fontSize, async (val, oldVal) => {
   if (bookMetadata.value && oldVal !== undefined && val !== oldVal && bookmarks.value.length > 0) {
-    // For each bookmark, try to find the new CFI for its snippet
-    for (const bookmark of bookmarks.value) {
-      if (bookmark.snippet) {
-        // Search for the snippet in the book and get the new CFI
-        const newCfi = await bookViewerRef.value?.findCfiForSnippet?.(bookmark.snippet);
-        if (newCfi) {
-          bookmark.cfi = newCfi;
-        }
-      }
+    const positionId = bookViewerRef.value?.getCurrentPositionId?.();
+    if (!positionId) return;
+    const idx = bookmarks.value.findIndex(b => b.positionId === positionId);
+    if (idx > -1) {
+      // Update the bookmark to the new positionId
+      bookmarks.value[idx].positionId = positionId;
+      saveBookmarks();
     }
+  }
+});
+// Also update on window resize
+window.addEventListener('resize', async () => {
+  const positionId = bookViewerRef.value?.getCurrentPositionId?.();
+  if (!positionId) return;
+  const idx = bookmarks.value.findIndex(b => b.positionId === positionId);
+  if (idx > -1) {
+    bookmarks.value[idx].positionId = positionId;
     saveBookmarks();
   }
 });
@@ -593,36 +632,39 @@ function saveBookmarks() {
   localStorage.setItem(getBookmarksKey(), JSON.stringify(bookmarks.value));
 }
 
+const currentPositionId = ref<string | null>(null);
+function onRestoreComplete(positionId: string) {
+  currentPositionId.value = positionId;
+}
+
 const isCurrentBookmarked = computed(() => {
-  if (!currentCfi.value) return false;
-  return bookmarks.value.some(b => b.cfi === currentCfi.value);
+  if (!currentPositionId.value) return false;
+  return bookmarks.value.some(b => b.positionId === currentPositionId.value);
 });
 
-function toggleBookmark() {
-  const cfi = bookViewerRef.value?.getCurrentCfi?.();
-  if (!cfi) return;
-  const idx = bookmarks.value.findIndex(b => b.cfi === cfi);
+async function toggleBookmark() {
+  const positionId = bookViewerRef.value?.getCurrentPositionId?.();
+  if (!positionId) return;
+  const idx = bookmarks.value.findIndex(b => b.positionId === positionId);
   if (idx > -1) {
     bookmarks.value.splice(idx, 1);
-  } else {
-    // Get a snippet of text at the CFI
-    bookViewerRef.value?.getCurrentPageText?.().then((snippet: string) => {
-      bookmarks.value.push({ cfi, label: `Bookmark`, timestamp: Date.now(), snippet: snippet?.slice(0, 64) });
-      saveBookmarks();
-    });
+    saveBookmarks();
     return;
   }
+  // Optionally get a snippet for display
+  const snippet = await bookViewerRef.value?.getCurrentPageText?.();
+  bookmarks.value.push({ positionId, label: `Bookmark`, timestamp: Date.now(), snippet: snippet?.slice(0, 64) });
   saveBookmarks();
 }
 
-function goToBookmark(cfi: string) {
-  bookViewerRef.value?.goToCfi?.(cfi);
+function goToBookmark(positionId: string) {
+  bookViewerRef.value?.restorePositionById?.(positionId);
   showBookmarks.value = false;
-  setTimeout(() => generateImageForCurrentPage(selectedArtStyle.value), 0);
+  setTimeout(() => generateImageForCurrentPage(selectedArtStyle.value), 1000);
 }
 
-function removeBookmark(cfi: string) {
-  const idx = bookmarks.value.findIndex(b => b.cfi === cfi);
+function removeBookmark(positionId: string) {
+  const idx = bookmarks.value.findIndex(b => b.positionId === positionId);
   if (idx > -1) {
     bookmarks.value.splice(idx, 1);
     saveBookmarks();
@@ -653,14 +695,7 @@ function onUploadZoneClick() {
 const onBookReady = () => {
   isLoadingBook.value = false;
   bookLoaded.value = true;
-  
-  // Restore last CFI here with timeout fallback
-  const lastCfi = localStorage.getItem(getLastCfiKey());
-  if (lastCfi) {
-    currentCfi.value = lastCfi;
-    pendingRestoreCfi = lastCfi;
-  }
-  
+  // (Removed old lastCfi logic)
   // Set a timeout to clear the restoration state if it takes too long
   cfiRestorationTimeout = setTimeout(() => {
     if (pendingRestoreCfi) {
