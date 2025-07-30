@@ -5,6 +5,7 @@
       <div style="display: flex; align-items: center; flex: 1 1 auto; min-width: 0;">
 
       <label for="art-style-combobox">{{ t.artStyle }}:&nbsp; </label>
+      <label for="art-style-combobox">{{ t.artStyle }}:&nbsp; </label>
       <div class="combobox-wrapper">
         <input
           id="art-style-combobox"
@@ -23,6 +24,7 @@
           class="combobox-input"
           autocomplete="off"
           :placeholder="t.chooseOrEnterStyle"
+          :placeholder="t.chooseOrEnterStyle"
         />
         <ul :class="['combobox-dropdown', filteredStyles.length > 8 ? 'too-many' : '']" v-if="dropdownOpen">
           <li
@@ -32,12 +34,16 @@
             @mousedown.prevent="selectStyle(style)"
           >
             {{ getLocalizedStyleName(style) }}
+            {{ getLocalizedStyleName(style) }}
           </li>
           <li
             v-if="!filteredStyles.includes('custom')"
+            v-if="!filteredStyles.includes('custom')"
             :class="{ selected: highlightedIndex === filteredStyles.length }"
             @mousedown.prevent="selectStyle('custom')"
+            @mousedown.prevent="selectStyle('custom')"
           >
+            {{ t.artStyles.custom }}
             {{ t.artStyles.custom }}
           </li>
         </ul>
@@ -56,6 +62,7 @@
           target="_blank"
           rel="noopener noreferrer"
           :title="currentLanguage === 'ru' ? 'Посмотреть документацию' : 'View Documentation'"
+          :title="currentLanguage === 'ru' ? 'Посмотреть документацию' : 'View Documentation'"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="3" width="16" height="18" rx="2"/>
@@ -67,6 +74,7 @@
           class="github-link"
           target="_blank"
           rel="noopener noreferrer"
+          :title="currentLanguage === 'ru' ? 'Посмотреть на GitHub' : 'View on GitHub'"
           :title="currentLanguage === 'ru' ? 'Посмотреть на GitHub' : 'View on GitHub'"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -84,6 +92,7 @@
           <div class="spinner-ring"></div>
         </div>
         <h4>{{ t.generatingAiIllustration }}</h4>
+        <h4>{{ t.generatingAiIllustration }}</h4>
 
       </div>
       <div v-else-if="props.imageUrl && props.imageUrl.length > 0" class="image-display">
@@ -91,11 +100,13 @@
           <img :src="props.imageUrl" alt="AI Generated Illustration" />
           <div class="image-hover-buttons">
             <button @click="downloadImage" :disabled="!props.imageUrl" class="action-btn" :title="t.downloadImage">
+            <button @click="downloadImage" :disabled="!props.imageUrl" class="action-btn" :title="t.downloadImage">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7,10 12,15 17,10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
+              {{ t.downloadImage }}
               {{ t.downloadImage }}
             </button>
           </div>
@@ -117,6 +128,8 @@
         </div>
         <h4>{{ t.illustrationCanceled }}</h4>
         <p>{{ t.canceledPrevious }}</p>
+        <h4>{{ t.illustrationCanceled }}</h4>
+        <p>{{ t.canceledPrevious }}</p>
       </div>
       <div v-else class="empty-state">
         <div class="empty-icon">
@@ -128,6 +141,8 @@
         </div>
         <h4>{{ t.noIllustrationYet }}</h4>
         <p>{{ t.turnPageOrSelect }}</p>
+        <h4>{{ t.noIllustrationYet }}</h4>
+        <p>{{ t.turnPageOrSelect }}</p>
       </div>
     </div>
   </div>
@@ -135,6 +150,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, nextTick } from 'vue';
+import { useI18n } from '../composables/useI18n';
 import { useI18n } from '../composables/useI18n';
 
 interface Props {
@@ -161,6 +177,8 @@ const emit = defineEmits<{
   regenerate: [style: string];
   download: [url: string];
 }>();
+
+const { t, currentLanguage, switchLanguage, getEnglishStyleName } = useI18n();
 
 const { t, currentLanguage, switchLanguage, getEnglishStyleName } = useI18n();
 
@@ -197,13 +215,17 @@ const dropdownOpen = ref(false);
 const highlightedIndex = ref(-1);
 const filterText = ref('');
 const isCustomSelected = computed(() => selectedStyle.value === 'custom');
+const isCustomSelected = computed(() => selectedStyle.value === 'custom');
 
 const selectedStyle = ref(
   ArtStyles.includes(props.selectedArtStyle as any)
+  ArtStyles.includes(props.selectedArtStyle as any)
     ? props.selectedArtStyle
+    : 'custom'
     : 'custom'
 );
 const customStyle = ref(
+  ArtStyles.includes(props.selectedArtStyle as any)
   ArtStyles.includes(props.selectedArtStyle as any)
     ? ''
     : props.selectedArtStyle || ''
@@ -221,8 +243,15 @@ const getLocalizedStyleName = (styleKey: string) => {
   return t.value.artStyles[styleKey as keyof typeof t.value.artStyles] || styleKey;
 };
 
+const getLocalizedStyleName = (styleKey: string) => {
+  return t.value.artStyles[styleKey as keyof typeof t.value.artStyles] || styleKey;
+};
+
 const filteredStyles = computed(() => {
   if (!dropdownOpen.value || !filterText.value) return [...ArtStyles];
+  return ArtStyles.filter(styleKey =>
+    getLocalizedStyleName(styleKey).toLowerCase().includes(filterText.value.toLowerCase()) ||
+    getEnglishStyleName(styleKey).toLowerCase().includes(filterText.value.toLowerCase())
   return ArtStyles.filter(styleKey =>
     getLocalizedStyleName(styleKey).toLowerCase().includes(filterText.value.toLowerCase()) ||
     getEnglishStyleName(styleKey).toLowerCase().includes(filterText.value.toLowerCase())
@@ -317,6 +346,7 @@ function onEnter() {
       selectStyle(filteredStyles.value[highlightedIndex.value]);
     } else if (highlightedIndex.value === filteredStyles.value.length) {
       selectStyle('custom');
+      selectStyle('custom');
     } else if (isCustomSelected.value && customStyle.value) {
       emit('regenerate', customStyle.value);
       emit('update:selectedArtStyle', customStyle.value);
@@ -331,8 +361,10 @@ function onEnter() {
 }
 
 watch([isCustomSelected, customStyle], ([isCustom, val]) => {
-  if (isCustom && val) {
-    localStorage.setItem('epub-custom-art-style', val);
+  if (isCustom) {
+    // Always update localStorage when in custom mode, even with empty string
+    // This ensures we clear the value when all characters are deleted
+    localStorage.setItem('epub-custom-art-style', val || '');  
   }
 });
 
@@ -344,6 +376,8 @@ watch(() => props.selectedArtStyle, (val) => {
   if (val && ArtStyles.includes(val as any)) {
     selectedStyle.value = val;
     customStyle.value = '';
+  } else if (val && val !== 'custom') {
+    selectedStyle.value = 'custom';
   } else if (val && val !== 'custom') {
     selectedStyle.value = 'custom';
     customStyle.value = val;
@@ -365,7 +399,9 @@ function downloadImage() {
 onMounted(() => {
   if (props.selectedArtStyle && !ArtStyles.includes(props.selectedArtStyle as any)) {
     selectedStyle.value = 'custom';
+    selectedStyle.value = 'custom';
     customStyle.value = props.selectedArtStyle;
+  } else if (selectedStyle.value === 'custom') {
   } else if (selectedStyle.value === 'custom') {
     const saved = localStorage.getItem('epub-custom-art-style');
     if (saved) customStyle.value = saved;
@@ -734,6 +770,7 @@ onMounted(() => {
 }
 
  
+.lang-btn:hover,
 .lang-btn:hover,
 .docs-link:hover, .github-link:hover {
   opacity: 1;
