@@ -118,9 +118,7 @@
           </svg>
         </div>
         <h4>{{ t.illustrationCanceled }}</h4>
-        <p>{{ t.canceledPrevious }}</p>
-        <h4>{{ t.illustrationCanceled }}</h4>
-        <p>{{ t.canceledPrevious }}</p>
+        <p>{{ t.canceledPrevious }}</p>  
       </div>
       <div v-else class="empty-state">
         <div class="empty-icon">
