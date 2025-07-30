@@ -23,14 +23,7 @@
           </template>
           <template v-else>
             <div class="book-viewer-scrollable">
-              <div v-if="showBookCover && bookMetadata?.cover" class="book-cover-modal">
-                <img :src="bookMetadata.cover" alt="Book cover" class="book-cover-image" />
-                <div class="book-cover-actions">
-                  <button class="primary-btn" @click="continueReading">Continue Reading</button>
-                </div>
-              </div>
               <BookViewer
-                v-else
                 ref="bookViewerRef"
                 :key="bookViewerKey"
                 :currentCfi="currentCfi"
@@ -181,7 +174,6 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const bookViewerKey = ref(0);
 const bookViewerRef = ref();
 const showBookCover = ref(false);
-let pendingRestorePositionId: string | null = null;
 
 const aiService = new CloudflareAIService();
 
@@ -233,15 +225,6 @@ const handleFileUpload = async (file: File) => {
     try {
       const metadata = await epubService.loadEpub(file);
       bookMetadata.value = metadata;
-      // Show book cover if available
-      if (metadata.cover) {
-        // Only set up restore after cover is shown
-        const savedPositionId = bookViewerRef.value?.loadPositionId?.();
-        if (savedPositionId) {
-          pendingRestorePositionId = savedPositionId;
-        }
-        showBookCover.value = true;
-      }
       
       // Store just the book name for reference
       localStorage.setItem('lastOpenedBookName', file.name);
@@ -311,17 +294,6 @@ function onFileInputChange(event: Event) {
   }
   if (fileInput.value) fileInput.value.value = '';
   }
-
-function continueReading() {
-  showBookCover.value = false;
-  // Restore last positionId after BookViewer is visible
-  if (pendingRestorePositionId) {
-    setTimeout(() => {
-      bookViewerRef.value?.restorePositionById?.(pendingRestorePositionId);
-      pendingRestorePositionId = null;
-    }, 100); // Wait for BookViewer to mount
-  }
-}
 
 const handleTextSelection = async (text: string) => {
   // If a generation is in progress, show 'Illustration canceled' for 1 second before starting new generation
