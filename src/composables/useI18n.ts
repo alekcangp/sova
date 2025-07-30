@@ -25,7 +25,7 @@ const translations = {
     artStyle: 'Стиль изображения',
     chooseOrEnterStyle: 'Выберите или введите стиль',
     generatingAiIllustration: 'Генерация ИИ иллюстрации...',
-    downloadImage: 'Скачать изображение',
+    downloadImage: 'Скачать',
     noIllustrationYet: 'Пока нет иллюстрации',
     turnPageOrSelect: 'Перелистните страницу или выделите текст для генерации ИИ иллюстрации',
     illustrationCanceled: 'Иллюстрация отменена',
