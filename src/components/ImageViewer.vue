@@ -162,8 +162,9 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  regenerate: [style: string];
-  download: [url: string];
+  (e: 'regenerate', style: string): void;
+  (e: 'download', url: string): void;
+  (e: 'update:selectedArtStyle', style: string): void;
 }>();
 
 const { t, currentLanguage, switchLanguage, getEnglishStyleName } = useI18n();
