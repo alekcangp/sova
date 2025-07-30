@@ -4,7 +4,7 @@
     <div class="image-style-select" style="display: flex; align-items: center; justify-content: space-between;">
       <div style="display: flex; align-items: center; flex: 1 1 auto; min-width: 0;">
 
-      <label for="art-style-combobox">Art Style:&nbsp; </label>
+      <label for="art-style-combobox">{{ t.artStyle }}:&nbsp; </label>
       <div class="combobox-wrapper">
         <input
           id="art-style-combobox"
@@ -21,7 +21,7 @@
           @blur="onBlur"
           class="combobox-input"
           autocomplete="off"
-          placeholder="Choose or enter style"
+          :placeholder="t.chooseOrEnterStyle"
         />
         <ul :class="['combobox-dropdown', filteredStyles.length > 8 ? 'too-many' : '']" v-if="dropdownOpen">
           <li
@@ -30,24 +30,31 @@
             :class="{ selected: idx === highlightedIndex }"
             @mousedown.prevent="selectStyle(style)"
           >
-            {{ style }}
+            {{ getLocalizedStyleName(style) }}
           </li>
           <li
-            v-if="!(filteredStyles as string[]).includes('Custom...')"
+            v-if="!filteredStyles.includes('custom')"
             :class="{ selected: highlightedIndex === filteredStyles.length }"
-            @mousedown.prevent="selectStyle('Custom...')"
+            @mousedown.prevent="selectStyle('custom')"
           >
-            Custom...
+            {{ t.artStyles.custom }}
           </li>
         </ul>
       </div>
       <div class="external-links">
+        <button
+          @click="switchLanguage"
+          class="lang-btn"
+          :title="currentLanguage === 'ru' ? 'Switch to English' : 'Переключить на русский'"
+        >
+          {{ currentLanguage.toUpperCase() }}
+        </button>
         <a
           href="https://deepwiki.com/alekcangp/sova"
           class="docs-link"
           target="_blank"
           rel="noopener noreferrer"
-          title="View Documentation"
+          :title="currentLanguage === 'ru' ? 'Посмотреть документацию' : 'View Documentation'"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="3" width="16" height="18" rx="2"/>
@@ -59,7 +66,7 @@
           class="github-link"
           target="_blank"
           rel="noopener noreferrer"
-          title="View on GitHub"
+          :title="currentLanguage === 'ru' ? 'Посмотреть на GitHub' : 'View on GitHub'"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.09.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.987 1.029-2.687-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.908-1.296 2.747-1.025 2.747-1.025.546 1.378.202 2.397.1 2.65.64.7 1.028 1.594 1.028 2.687 0 3.847-2.338 4.695-4.566 4.944.36.31.68.92.68 1.855 0 1.338-.012 2.419-.012 2.749 0 .268.18.577.688.48C19.138 20.2 22 16.447 22 12.021 22 6.484 17.523 2 12 2z"/>
@@ -75,20 +82,20 @@
           <div class="spinner-ring"></div>
           <div class="spinner-ring"></div>
         </div>
-        <h4>Generating AI Illustration...</h4>
+        <h4>{{ t.generatingAiIllustration }}</h4>
 
       </div>
       <div v-else-if="props.imageUrl && props.imageUrl.length > 0" class="image-display">
         <div class="image-hover-container">
           <img :src="props.imageUrl" alt="AI Generated Illustration" />
           <div class="image-hover-buttons">
-            <button @click="downloadImage" :disabled="!props.imageUrl" class="action-btn" title="Download image">
+            <button @click="downloadImage" :disabled="!props.imageUrl" class="action-btn" :title="t.downloadImage">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7,10 12,15 17,10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              Download
+              {{ t.downloadImage }}
             </button>
           </div>
         </div>
@@ -107,8 +114,8 @@
             <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
           </svg>
         </div>
-        <h4>Illustration canceled</h4>
-        <p>You canceled the previous generation. Turn the page or select text to generate a new illustration.</p>
+        <h4>{{ t.illustrationCanceled }}</h4>
+        <p>{{ t.canceledPrevious }}</p>
       </div>
       <div v-else class="empty-state">
         <div class="empty-icon">
@@ -118,8 +125,8 @@
             <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
           </svg>
         </div>
-        <h4>No illustration yet</h4>
-        <p>Turn the page or select text to generate an AI illustration</p>
+        <h4>{{ t.noIllustrationYet }}</h4>
+        <p>{{ t.turnPageOrSelect }}</p>
       </div>
     </div>
   </div>
@@ -127,6 +134,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, nextTick } from 'vue';
+import { useI18n } from '../composables/useI18n';
 
 interface Props {
   imageUrl?: string;
@@ -153,41 +161,68 @@ const emit = defineEmits<{
   download: [url: string];
 }>();
 
+const { t, currentLanguage, switchLanguage, getEnglishStyleName } = useI18n();
+
 const ArtStyles = [
-  'Cyberpunk',
-  'Fantasy',
-  'Futuristic',
-  'Abstract',
-  'Retro Wave',
-  'Sci-Fi'
-] as const;
+  'futuristic',
+  'fantasy',
+  'steampunk',
+  'cyberpunk',
+  'watercolor',
+  'oil_painting',
+  'anime',
+  'sketch',
+  'minimalism',
+  'realism',
+  'impressionism',
+  'surrealism',
+  'cartoon',
+  'pixel_art',
+  'noir',
+  'gothic',
+  'baroque',
+  'pop_art',
+  'abstract',
+  'photorealistic',
+  'render_3d',
+  'ink',
+  'classic',
+  'modern'
+];
 
 const comboboxInput = ref<HTMLInputElement | null>(null);
 const dropdownOpen = ref(false);
 const highlightedIndex = ref(-1);
 const filterText = ref('');
-const isCustomSelected = computed(() => selectedStyle.value === 'Custom...');
+const isCustomSelected = computed(() => selectedStyle.value === 'custom');
 
 const selectedStyle = ref(
-  ArtStyles.includes((props.selectedArtStyle as any))
+  ArtStyles.includes(props.selectedArtStyle as any)
     ? props.selectedArtStyle
-    : 'Custom...'
+    : 'custom'
 );
 const customStyle = ref(
-  ArtStyles.includes((props.selectedArtStyle as any))
+  ArtStyles.includes(props.selectedArtStyle as any)
     ? ''
     : props.selectedArtStyle || ''
 );
 
 const displayedValue = computed(() => {
-  if (isCustomSelected.value) return customStyle.value;
-  return selectedStyle.value;
+  if (isCustomSelected.value) {
+    return customStyle.value;
+  }
+  return getLocalizedStyleName(selectedStyle.value);
 });
+
+const getLocalizedStyleName = (styleKey: string) => {
+  return t.value.artStyles[styleKey as keyof typeof t.value.artStyles] || styleKey;
+};
 
 const filteredStyles = computed(() => {
   if (!dropdownOpen.value || !filterText.value) return [...ArtStyles];
-  return ArtStyles.filter(style =>
-    style.toLowerCase().includes(filterText.value.toLowerCase())
+  return ArtStyles.filter(styleKey =>
+    getLocalizedStyleName(styleKey).toLowerCase().includes(filterText.value.toLowerCase()) ||
+    getEnglishStyleName(styleKey).toLowerCase().includes(filterText.value.toLowerCase())
   );
 });
 
@@ -204,20 +239,20 @@ function closeDropdown() {
 }
 
 function selectStyle(style: string) {
-  if (style === 'Custom...') {
-    selectedStyle.value = 'Custom...';
+  if (style === 'custom') {
+    selectedStyle.value = 'custom';
     const saved = localStorage.getItem('epub-custom-art-style');
     customStyle.value = saved || '';
     nextTick(() => {
       if (comboboxInput.value) comboboxInput.value.focus();
     });
     if ((saved && saved.trim()) || (customStyle.value && customStyle.value.trim())) {
-      emit('regenerate', customStyle.value);
+      emit('regenerate', getEnglishStyleName(customStyle.value) || customStyle.value);
     }
   } else {
     selectedStyle.value = style;
     customStyle.value = '';
-    emit('regenerate', style);
+    emit('regenerate', getEnglishStyleName(style));
   }
   closeDropdown();
 }
@@ -252,14 +287,14 @@ function onEnter() {
     if (highlightedIndex.value >= 0 && highlightedIndex.value < filteredStyles.value.length) {
       selectStyle(filteredStyles.value[highlightedIndex.value]);
     } else if (highlightedIndex.value === filteredStyles.value.length) {
-      selectStyle('Custom...');
+      selectStyle('custom');
     } else if (isCustomSelected.value && customStyle.value) {
-      emit('regenerate', customStyle.value);
+      emit('regenerate', getEnglishStyleName(customStyle.value) || customStyle.value);
       localStorage.setItem('epub-custom-art-style', customStyle.value);
       closeDropdown();
     }
   } else if (isCustomSelected.value && customStyle.value) {
-    emit('regenerate', customStyle.value);
+    emit('regenerate', getEnglishStyleName(customStyle.value) || customStyle.value);
     localStorage.setItem('epub-custom-art-style', customStyle.value);
   }
 }
@@ -278,8 +313,8 @@ watch(() => props.selectedArtStyle, (val) => {
   if (val && ArtStyles.includes(val as any)) {
     selectedStyle.value = val;
     customStyle.value = '';
-  } else if (val && val !== 'Custom...') {
-    selectedStyle.value = 'Custom...';
+  } else if (val && val !== 'custom') {
+    selectedStyle.value = 'custom';
     customStyle.value = val;
   }
 });
@@ -292,9 +327,9 @@ function downloadImage() {
 
 onMounted(() => {
   if (props.selectedArtStyle && !ArtStyles.includes(props.selectedArtStyle as any)) {
-    selectedStyle.value = 'Custom...';
+    selectedStyle.value = 'custom';
     customStyle.value = props.selectedArtStyle;
-  } else if (selectedStyle.value === 'Custom...') {
+  } else if (selectedStyle.value === 'custom') {
     const saved = localStorage.getItem('epub-custom-art-style');
     if (saved) customStyle.value = saved;
   }
@@ -633,6 +668,26 @@ onMounted(() => {
   align-items: center;
 }
 
+.lang-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 50%;
+  position: static;
+  bottom: unset;
+  right: unset;
+  z-index: 1;
+  opacity: 0.82;
+  transition: opacity 0.18s, transform 0.18s;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
   
 .docs-link {
   right: 62px;
@@ -642,6 +697,7 @@ onMounted(() => {
 }
 
  
+.lang-btn:hover,
 .docs-link:hover, .github-link:hover {
   opacity: 1;
   background:  rgba(255,255,255,0.5);

@@ -14,11 +14,11 @@
           <template v-if="showUpload">
             <div class="upload-zone" @click="onUploadZoneClick" @drop.prevent="onDrop" @dragover.prevent @dragleave.prevent>
               <div class="upload-icon">📚</div>
-              <h3>Drag and drop or use the Upload Book button below</h3>
-              <p>Supported format: EPUB</p>
-              <div v-if="isLoadingBook" class="loading-indicator">Processing EPUB...</div>
+              <h3>{{ t.dragAndDrop }}</h3>
+              <p>{{ t.supportedFormat }}</p>
+              <div v-if="isLoadingBook" class="loading-indicator">{{ t.processingEpub }}</div>
               <div v-if="uploadError" class="error-message">{{ uploadError }}</div>
-              <button class="upload-btn" @click.stop="onUploadZoneClick">Upload Book</button>
+              <button class="upload-btn" @click.stop="onUploadZoneClick">{{ t.uploadBook }}</button>
             </div>
           </template>
           <template v-else>
@@ -43,7 +43,7 @@
                   class="nav-btn load-book-btn"
                   @click="onUploadZoneClick"
                   :disabled="isLoadingBook"
-                  title="Load Book"
+                  :title="t.loadBook"
                 >
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 6.25278V19.2528M12 6.25278C10.8321 5.47686 9.24649 5 7.5 5C5.75351 5 4.16789 5.47686 3 6.25278V19.2528C4.16789 18.4769 5.75351 18 7.5 18C9.24649 18 10.8321 18.4769 12 19.2528M12 6.25278C13.1679 5.47686 14.7535 5 16.5 5C18.2465 5 19.8321 5.47686 21 6.25278V19.2528C19.8321 18.4769 18.2465 18 16.5 18C14.7535 18 13.1679 18.4769 12 19.2528" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -53,7 +53,7 @@
                   @click="previousPage" 
                   class="nav-btn"
                   :disabled="!bookLoaded || isLoadingBook"
-                  title="Previous page (←)"
+                  :title="t.previousPage"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 19l-7-7 7-7"/>
@@ -66,7 +66,7 @@
                   @click="nextPage" 
                   class="nav-btn"
                   :disabled="!bookLoaded || isLoadingBook"
-                  title="Next page (→)"
+                  :title="t.nextPage"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 5l7 7-7 7"/>
@@ -74,23 +74,23 @@
                 </button>
               </div>
               <div class="action-controls">
-                <button @click="decreaseFontSize" class="action-btn" :disabled="!bookLoaded || isLoadingBook || fontSize <= minFontSize" title="Decrease text size">
+                <button @click="decreaseFontSize" class="action-btn" :disabled="!bookLoaded || isLoadingBook || fontSize <= minFontSize" :title="t.decreaseTextSize">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
                 </button>
-                <button @click="increaseFontSize" class="action-btn" :disabled="!bookLoaded || isLoadingBook || fontSize >= maxFontSize" title="Increase text size">
+                <button @click="increaseFontSize" class="action-btn" :disabled="!bookLoaded || isLoadingBook || fontSize >= maxFontSize" :title="t.increaseTextSize">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"/>
                     <line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
                 </button>
-                <button @click="toggleBookmark" class="action-btn" :class="{ 'active-bookmark': isCurrentBookmarked }" :disabled="!bookLoaded || isLoadingBook" title="Add or remove bookmark">
+                <button @click="toggleBookmark" class="action-btn" :class="{ 'active-bookmark': isCurrentBookmarked }" :disabled="!bookLoaded || isLoadingBook" :title="t.addRemoveBookmark">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
                   </svg>
                 </button>
-                <button @click="showBookmarks = true" class="action-btn" :disabled="!bookLoaded || isLoadingBook" title="Show bookmarks">
+                <button @click="showBookmarks = true" class="action-btn" :disabled="!bookLoaded || isLoadingBook" :title="t.showBookmarks">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M5 3a2 2 0 0 0-2 2v16l7-4 7 4V5a2 2 0 0 0-2-2H5z"/>
                     <line x1="8" y1="8" x2="16" y2="8"/>
@@ -121,8 +121,8 @@
       <div v-if="showBookmarks" class="bookmarks-modal" @click.self="showBookmarks = false">
         <div class="modal-content">
           <div class="modal-header">
-      <h3>Bookmarks</h3>
-            <button class="close-x-btn" @click="showBookmarks = false" title="Close">
+      <h3>{{ t.bookmarks }}</h3>
+            <button class="close-x-btn" @click="showBookmarks = false" :title="t.close">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
@@ -156,8 +156,10 @@ import ImageViewer from './ImageViewer.vue';
 import epubService from '../services/epubService';
 import CloudflareAIService from '../services/cloudflareAI';
 import type { BookMetadata, AIGeneration } from '../types/epub';
+import { useI18n } from '../composables/useI18n';
 
 // State management
+const { t } = useI18n();
 const bookLoaded = ref(false);
 const isLoadingBook = ref(false);
 const uploadError = ref('');
@@ -187,7 +189,7 @@ const showBookmarks = ref(false);
 const getBookmarksKey = () => `epub-bookmarks-${bookMetadata.value?.title || 'default'}`;
 const getFontSizeKey = () => `epub-font-size-${bookMetadata.value?.title || 'default'}`;
 
-const selectedArtStyle = ref(localStorage.getItem('epub-art-style') || 'Futuristic');
+const selectedArtStyle = ref(localStorage.getItem('epub-art-style') || 'futuristic');
 
 let pendingRestoreCfi: string | null = null;
 let cfiRestorationTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -265,7 +267,7 @@ const handleFileUpload = async (file: File) => {
       console.log('Book loading completed successfully');
     } catch (error) {
       console.error('Error loading EPUB:', error);
-      uploadError.value = 'Failed to load EPUB file. Please try another file.';
+      uploadError.value = t.value.failedToLoadEpub;
       localStorage.removeItem('lastOpenedBook');
       localStorage.removeItem('lastOpenedBookName');
       showUpload.value = true;
@@ -275,7 +277,7 @@ const handleFileUpload = async (file: File) => {
     }
   } catch (error) {
     console.error('File handling error:', error);
-    uploadError.value = 'Error handling file upload. Please try again.';
+    uploadError.value = t.value.errorHandlingFile;
     localStorage.removeItem('lastOpenedBook');
     localStorage.removeItem('lastOpenedBookName');
     isLoadingBook.value = false;
@@ -290,7 +292,7 @@ function onFileInputChange(event: Event) {
   if (file && (file.type === 'application/epub+zip' || file.name.toLowerCase().endsWith('.epub'))) {
     handleFileUpload(file);
   } else {
-    uploadError.value = 'Please select a valid EPUB file.';
+    uploadError.value = t.value.selectValidEpub;
   }
   if (fileInput.value) fileInput.value.value = '';
   }
@@ -625,7 +627,7 @@ async function toggleBookmark() {
   }
   // Optionally get a snippet for display
   const snippet = await bookViewerRef.value?.getCurrentPageText?.();
-  bookmarks.value.push({ positionId, label: `Bookmark`, timestamp: Date.now(), snippet: snippet?.slice(0, 64) });
+  bookmarks.value.push({ positionId, label: t.value.bookmark, timestamp: Date.now(), snippet: snippet?.slice(0, 64) });
   saveBookmarks();
 }
 
@@ -655,7 +657,7 @@ function onDrop(event: DragEvent) {
     if (file.type === 'application/epub+zip' || file.name.endsWith('.epub')) {
       handleFileUpload(file);
     } else {
-      uploadError.value = 'Please drop a valid EPUB file.';
+      uploadError.value = t.value.dropValidEpub;
     }
   }
 }
