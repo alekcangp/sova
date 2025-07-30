@@ -963,11 +963,19 @@ watch(selectedArtStyle, (val) => {
   max-width: 480px;
   margin: 0 auto;
 }
+
+.upload-zone h3 {
+  white-space: pre-line;
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+}
+
 .upload-zone:hover {
   border-color: #0056CC;
   background: rgba(0, 122, 255, 0.05);
   transform: translateY(-2px);
 }
+
 .upload-icon {
   font-size: 48px;
   color: #007AFF;

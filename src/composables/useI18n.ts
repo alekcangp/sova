@@ -8,7 +8,7 @@ const translations = {
   ru: {
     // Upload zone
     uploadBook: 'Загрузить книгу',
-    dragAndDrop: 'Перетащите или используйте кнопку "Загрузить книгу" ниже',
+    dragAndDrop: 'Перетащите или используйте кнопку',
     supportedFormat: 'Поддерживаемый формат: EPUB',
     processingEpub: 'Обработка EPUB...',
     
@@ -74,7 +74,7 @@ const translations = {
   en: {
     // Upload zone
     uploadBook: 'Upload EPUB Book',
-    dragAndDrop: 'Drag and drop or use the Upload Book button below',
+    dragAndDrop: 'Drag and drop or use the button',
     supportedFormat: 'Supported format: EPUB',
     processingEpub: 'Processing EPUB...',
     
