@@ -1,3 +1,7 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/alekcangp/sova)
+
+
+
 # Sova – your AI reading companion. (Sova means Owl.)
 
 A modern web application for reading EPUB books and generating AI illustrations with seamless integration.
