@@ -31,7 +31,7 @@ export default async function handler(req, res) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            text: text,
+            text: "Summurize text in english:" + text,
             agent_names: ["summary_agent"],
             args: { "type": "summarize_text" }
           })
