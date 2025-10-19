@@ -1,10 +1,10 @@
 import { Buffer } from 'buffer';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+ // if (req.method !== 'POST') {
+ //   res.setHeader('Allow', 'POST');
+ //   return res.status(405).json({ error: 'Method not allowed' });
+ // }
 
   const { text, imagePrompt, style } = req.body || {};
 
